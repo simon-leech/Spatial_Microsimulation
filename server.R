@@ -72,8 +72,8 @@ shinyServer(function(input, output, session) {
   
   #### Collect variable and dataframe for analysis bar chart and descriptive stats ####
   BarInput <- reactive ( { 
-    bardf <- input$Analysis
-    barvariable<- input$AnalysisVar
+    bardf <- get(input$Analysis)
+    barvariable<- bardf[,which(names(bardf)==input$AnalysisVar)]
     plotvariable<- gsub(" ", "", paste(bardf, "$", barvariable, collapse=""), fixed=TRUE)
   })
   # Testing box at bottom of page to see dateframe$variable to plot 
@@ -86,7 +86,7 @@ shinyServer(function(input, output, session) {
   #### Bar chart and summary table When button is clicked. ####
   observeEvent(input$histbutton, {
     BarInput()
-    output$analysisplot1 <- renderPlot(plot(BarInput(),xlab="X-Axis", ylab="Count"))
+    output$analysisplot1 <- renderPlot(plot(BarInput(), xlab="X-Axis", ylab="Count"))
     # Just for reference, the line below works fine
     #output$analysisplot1<- renderPlot(plot(ind$Travel, xlab=paste(BarInput()), ylab="Count"))
   })

@@ -1,6 +1,8 @@
 library("shiny")
 library("shinythemes")
 library("DT")
+library("leaflet")
+library("sf")
 # Define UI for application that draws a histogram
 navbarPage(theme=shinytheme("flatly"), "Leeds LSOA Vulnerability",
            tabPanel("Homepage",
@@ -22,8 +24,8 @@ navbarPage(theme=shinytheme("flatly"), "Leeds LSOA Vulnerability",
                     uiOutput('histplotvar'),
                     actionButton("histbutton", "Click here to generate descriptive statistics and plots!"),
                     plotOutput("analysisplot1"),
-                    verbatimTextOutput("analysistable"),
-                    uiOutput("plotvar")),
+                    verbatimTextOutput("analysistable")),
+                    #uiOutput("plotvar")),
            # In here I want to show Model Fit variables, and multicollinerarity tables.
            tabPanel("Model Fit and External Validation", 
                     fluidRow(selectInput("ModelFit", "Choose Variables for Individual Dataset to compare: ",c("Age vs Commuting Time"="tbl_agecom", "Sex vs Commuting Time"="tbl_sexcom", "LTD vs Commuting Time"="tbl_ltdcom", "Employment Sector vs Commuting Time"="tbl_empcom", "Travel vs Commuting Time"= "tbl_travcom", "Sex vs Employment Sector"="tbl_sexemp", "Sex vs Travel"="tbl_sextrav", "Travel vs Employment Sector"="tbl_travemp", "LTD vs Employment Sector"="tbl_ltdemp", "LTD vs Travel"="tbl_ltdtrav", "LTD vs Sex"="tbl_ltdsex") )),
