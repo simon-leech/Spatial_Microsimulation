@@ -14,6 +14,8 @@ library("hydroGOF") #load the hydroGOF package for RMSE
 library("reshape2") #load reshape for joining tables
 library("ggplot2")
 library("plotly") 
+library("shinycssloaders")
+library("tidyverse")
 # Define server logic required
 shinyServer(function(input, output, session) {
   #### Previous Method where Data Cleaned in Excel (Amending as not Truly Open Science) ####
@@ -77,7 +79,8 @@ shinyServer(function(input, output, session) {
     bardf <- get(input$Analysis)
     barvariable<- bardf[,which(names(bardf)==input$AnalysisVar)]
     plotvariable<- gsub(" ", "", paste(bardf, "$", barvariable, collapse=""), fixed=TRUE)
-    
+    plotdata <- bardf %>% count(input$AnalysisVar) # count instances of each 
+    print(plotdata)
     })
   # Testing box at bottom of page to see dateframe$variable to plot 
   output$plotvariable <- renderText({ 
@@ -89,8 +92,7 @@ shinyServer(function(input, output, session) {
   #### Bar chart and summary table When button is clicked. ####
   observeEvent(input$histbutton, {
     BarInput()
-    p <- ggplot(BarInput()) + geom_bar(aes(x=input$AnalysisVar))
-    output$analysisplot1 <- RenderPlot(ggplotly(analysisplot1)) # set to interactive
+    output$analysisplot1 <- renderPlot(ggplot(data=plotdata) + geom_bar(aes(x=input$AnalysisVar,y=n, fill=input$AnalysisVar), stat="identity") + labs(y="Count", x=paste(input$AnalysisVar)))
     })
   observeEvent(input$histbutton, { 
     output$analysistable <-renderPrint({ 
@@ -105,50 +107,30 @@ shinyServer(function(input, output, session) {
     cramer.test((eval(as.name(input$ModelFit))), nrep=1000, conf.level=95)
   })
   
-  # # HAVEN'T GOT TO THIS SECTION ON DASHBOARD YET #
-  # #### Chi Squared Testing for Multi-collinearity ####
-  # #Chi squared Section#
-  # #Created tables for all variables included against Commuting Time (important in Personal Carbon Usage)
-  # # # the contingency table for age and commuting time
-  # tbl_agecom <- table(ind$Age, ind$Commuting.Time)
-  # #tbl_agecom
-  # # # the contingency table for sex and commuting time
-  # tbl_sexcom <- table(ind$ï..Sex, ind$Commuting.Time)
-  # 
-  # # #tbl_sexcom
-  # # # the contingency table for ltd and commuting time
-  # tbl_ltdcom <- table(ind$LTD, ind$Commuting.Time)
-  # 
-  # # #tbl_ltdcom
-  # # # the contingency table for employment and commuting time
-  # tbl_empcom <- table(ind$Employment.Sector, ind$Commuting.Time)
-  # # #tbl_empcom
-  # # # the contingency table for travel and commuting time
-  # tbl_travcom <- table(ind$Travel, ind$Commuting.Time)
-  # # tbl_travcom
-  # #
-  # # #Run cramer test for strength and chi squared assocation between variables
-  # # cramer.test(tbl_agecom,nrep = 1000, conf.level = 95) #chi squared and cramer's V for age vs commuting time
-  # # cramer.test(tbl_sexcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for sex vs commuting time
-  # # cramer.test(tbl_ltdcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for disability vs commuting time
-  # # cramer.test(tbl_empcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for employment vs commuting time
-  # # cramer.test(tbl_travcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for travel vs commuting time
-  # 
-  # 
-  # # #Found that Sex, Employment and Travel significant as <0.05, so test against each other to measure collinearity.
-  # tbl_sexemp <- table(ind$ï..Sex, ind$Employment.Sector)
-  # # tbl_sexemp          # the contingency table for sex and employment
-  # tbl_sextrav <- table(ind$ï..Sex, ind$Travel)
-  # # tbl_sextrav         # the contingency table for sex and travel
-  # tbl_travemp <- table(ind$Travel, ind$Employment.Sector)
-  # # tbl_travemp          # the contingency table for LTD and employment
-  # tbl_ltdemp <- table(ind$LTD, ind$Employment.Sector)
-  # # tbl_ltdemp          # the contingency table for LTD and employment
-  # tbl_ltdtrav <- table(ind$LTD, ind$Travel)
-  # # tbl_ltdtrav          # the contingency table for LTD and travel
-  # tbl_ltdsex <- table(ind$LTD, ind$ï..Sex)
-  # # tbl_ltdsex          # the contingency table for LTD and employment
+  # HAVEN'T GOT TO THIS SECTION ON DASHBOARD YET #
+  #### Chi Squared Testing for Multi-collinearity ####
+  #Chi squared Section#
+  #Created tables for all variables included against Commuting Time (important in Personal Carbon Usage)
+  # # the contingency table for age and commuting time
+  tbl_agecom <- table(ind$Age, ind$Commuting.Time)
+  # # the contingency table for sex and commuting time
+  tbl_sexcom <- table(ind$ï..Sex, ind$Commuting.Time)
+  # # the contingency table for ltd and commuting time
+  tbl_ltdcom <- table(ind$LTD, ind$Commuting.Time)
+  # # the contingency table for employment and commuting time
+  tbl_empcom <- table(ind$Employment.Sector, ind$Commuting.Time)
+  # # the contingency table for travel and commuting time
+  tbl_travcom <- table(ind$Travel, ind$Commuting.Time)
+  # #Found that Sex, Employment and Travel significant as <0.05, so test against each other to measure collinearity.
+  tbl_sexemp <- table(ind$ï..Sex, ind$Employment.Sector)
+  tbl_sextrav <- table(ind$ï..Sex, ind$Travel)
+  tbl_travemp <- table(ind$Travel, ind$Employment.Sector)
+  tbl_ltdemp <- table(ind$LTD, ind$Employment.Sector)
+  tbl_ltdtrav <- table(ind$LTD, ind$Travel)
+  tbl_ltdsex <- table(ind$LTD, ind$ï..Sex)
 
+  
+  
   # Read in the Leeds LSOA shapefile
   LSOA_shp <- st_read('data//LEEDS.shp')
   VAGG <- read.csv('data//Vulnerability_LSOA.csv')
@@ -291,12 +273,28 @@ shinyServer(function(input, output, session) {
   pal60 <- colorBin("YlOrRd", domain = LSOA_shp_VAGG$VPCA602050AGG, bins=bins60) # Value DOESN'T match, min should be 157.5, max of 166.5
   pal80 <- colorBin("YlOrRd", domain = LSOA_shp_VAGG$VPCA802050AGG, bins=bins80) # Value DOESN'T match, min should be 314.9, max of 333.1
   
+ helpfulmapinfo <- "Alter the map layer displayed to uncover additional insight, and hover over an LSOA to see its % compared to the average!. Layers available are: 
+  \n* 2019 Carbon Vulnerability
+ \n* Proportion of Family Homes
+ \n* House Price
+ \n* Income per Year
+ \n* Distance to Work
+ \n* Income Spent on Work Travel
+ \n* Emissions Spent on Work Travel
+ \n* Household Emissions
+ \n* Proportion of over 75s
+ \n* Proportion of Disabled Residents
+ \n* Vulnerablility to 40% Carbon Reduction
+ \n* Vulnerablility to 60% Carbon Reduction
+ \n* Vulnerablility to 80% Carbon Reduction
+ "
+ output$helpfulmapinfo <- renderText(helpfulmapinfo)
   
   # #### Create Leaflet Interactive Map ####
   output$map <- renderLeaflet({
     leaflet(LSOA_shp_VAGG) %>%
       addTiles() %>%
-      setView( lat=53.788036,lng=-1.559830, zoom=10) %>%
+      setView(lat=53.788036,lng=-1.559830, zoom=11) %>%
       addPolygons(
         fillColor=~palPCA2019(VPCAAGG),
         stroke=TRUE,
@@ -443,9 +441,9 @@ shinyServer(function(input, output, session) {
       addLegend(pal=palltd, values=~LSOA_shp_Demog$LTD, opacity=0.9, title="Proportion of Long-Term Disabled Residents (%)", position= "bottomleft", group="Proportion of Disabled Residents") %>%
       addLegend(pal=pal40, values=~LSOA_shp_VAGG$VPCA402050AGG, opacity=0.9, title="Vulnerability to 40% Carbon Reduction", position= "bottomleft", group="Vulnerability to 40% Carbon Reduction") %>%
       addLegend(pal=pal60, values=~LSOA_shp_VAGG$VPCA602050AGG, opacity=0.9, title="Vulnerability to 60% Carbon Reduction", position= "bottomleft", group="Vulnerability to 60% Carbon Reduction") %>%
-      addLegend(pal=pal80, values=~LSOA_shp_VAGG$VPCA802050AGG, opacity=0.9, title="Vulnerability to 80% Carbon Reduction", position= "bottomleft", group="Vulnerability to 80% Carbon Reduction")
-    output$map %>% hideGroup("Proportion of Family Homes") %>% hideGroup("House Price") %>% hideGroup("Income per Year") %>% hideGroup("Distance to Work") %>% hideGroup("Income Spent on Work Travel") %>% hideGroup("Emissions on Work Travel") %>% hideGroup("Household Emissions") %>% hideGroup("Proportion of Over 75s") %>% hideGroup("Proportion of Disabled Residents") %>% hideGroup("Vulnerability to 40% Carbon Reduction") %>% hideGroup("Vulnerability to 60% Carbon Reduction")%>% hideGroup("Vulnerability to 80% Carbon Reduction")
-    
+      addLegend(pal=pal80, values=~LSOA_shp_VAGG$VPCA802050AGG, opacity=0.9, title="Vulnerability to 80% Carbon Reduction", position= "bottomleft", group="Vulnerability to 80% Carbon Reduction") %>% 
+      hideGroup("Proportion of Family Homes") %>% hideGroup("House Price") %>% hideGroup("Income per Year") %>% hideGroup("Distance to Work") %>% hideGroup("Income Spent on Work Travel") %>% hideGroup("Emissions on Work Travel") %>% hideGroup("Household Emissions") %>% hideGroup("Proportion of Over 75s") %>% hideGroup("Proportion of Disabled Residents") %>% hideGroup("Vulnerability to 40% Carbon Reduction") %>% hideGroup("Vulnerability to 60% Carbon Reduction")%>% hideGroup("Vulnerability to 80% Carbon Reduction")
+
   })
   
 })
