@@ -78,8 +78,10 @@ shinyServer(function(input, output, session) {
   BarInput <- reactive ( { 
     bardf <- get(input$Analysis)
     barvariable<- bardf[,which(names(bardf)==input$AnalysisVar)]
+    print(barvariable)
     plotvariable<- gsub(" ", "", paste(bardf, "$", barvariable, collapse=""), fixed=TRUE)
-    plotdata <- bardf %>% count(input$AnalysisVar) # count instances of each 
+    plotdata <- bardf %>% count(get(input$AnalysisVar)) # count instances of each 
+    colnames(plotdata) <- c("Variable", "N")
     print(plotdata)
     })
   # Testing box at bottom of page to see dateframe$variable to plot 
@@ -92,7 +94,7 @@ shinyServer(function(input, output, session) {
   #### Bar chart and summary table When button is clicked. ####
   observeEvent(input$histbutton, {
     BarInput()
-    output$analysisplot1 <- renderPlot(ggplot(data=plotdata) + geom_bar(aes(x=input$AnalysisVar,y=n, fill=input$AnalysisVar), stat="identity") + labs(y="Count", x=paste(input$AnalysisVar)))
+    output$analysisplot1 <- renderPlot(ggplot(data=BarInput()) + geom_bar(aes(x="Variable",y="N", fill="Variable"), stat="identity") + labs(y="Count", x=Variable))
     })
   observeEvent(input$histbutton, { 
     output$analysistable <-renderPrint({ 
@@ -128,8 +130,6 @@ shinyServer(function(input, output, session) {
   tbl_ltdemp <- table(ind$LTD, ind$Employment.Sector)
   tbl_ltdtrav <- table(ind$LTD, ind$Travel)
   tbl_ltdsex <- table(ind$LTD, ind$ï..Sex)
-
-  
   
   # Read in the Leeds LSOA shapefile
   LSOA_shp <- st_read('data//LEEDS.shp')
@@ -273,20 +273,22 @@ shinyServer(function(input, output, session) {
   pal60 <- colorBin("YlOrRd", domain = LSOA_shp_VAGG$VPCA602050AGG, bins=bins60) # Value DOESN'T match, min should be 157.5, max of 166.5
   pal80 <- colorBin("YlOrRd", domain = LSOA_shp_VAGG$VPCA802050AGG, bins=bins80) # Value DOESN'T match, min should be 314.9, max of 333.1
   
- helpfulmapinfo <- "Alter the map layer displayed to uncover additional insight, and hover over an LSOA to see its % compared to the average!. Layers available are: 
-  \n* 2019 Carbon Vulnerability
- \n* Proportion of Family Homes
- \n* House Price
- \n* Income per Year
- \n* Distance to Work
- \n* Income Spent on Work Travel
- \n* Emissions Spent on Work Travel
- \n* Household Emissions
- \n* Proportion of over 75s
- \n* Proportion of Disabled Residents
- \n* Vulnerablility to 40% Carbon Reduction
- \n* Vulnerablility to 60% Carbon Reduction
- \n* Vulnerablility to 80% Carbon Reduction
+ helpfulmapinfo <- "Alter the map layer displayed to uncover additional insight,\nand hover over an LSOA to see its % compared to the average!\n\n 
+ Layers available are: 
+ 
+  * 2019 Carbon Vulnerability
+ * Proportion of Family Homes
+ * House Price
+ * Income per Year
+ * Distance to Work
+ * Income Spent on Work Travel
+ * Emissions Spent on Work Travel
+ * Household Emissions
+ * Proportion of over 75s
+ * Proportion of Disabled Residents
+ * Vulnerablility to 40% Carbon Reduction
+ * Vulnerablility to 60% Carbon Reduction
+ * Vulnerablility to 80% Carbon Reduction
  "
  output$helpfulmapinfo <- renderText(helpfulmapinfo)
   
