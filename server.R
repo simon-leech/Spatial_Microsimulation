@@ -12,6 +12,8 @@ library("RVAideMemoire") #load the RVAideMemoire package for cramers test
 library("ipfp") # load the ipfp package for IPF process
 library("hydroGOF") #load the hydroGOF package for RMSE
 library("reshape2") #load reshape for joining tables
+library("ggplot2")
+library("plotly") 
 # Define server logic required
 shinyServer(function(input, output, session) {
   #### Previous Method where Data Cleaned in Excel (Amending as not Truly Open Science) ####
@@ -75,10 +77,11 @@ shinyServer(function(input, output, session) {
     bardf <- get(input$Analysis)
     barvariable<- bardf[,which(names(bardf)==input$AnalysisVar)]
     plotvariable<- gsub(" ", "", paste(bardf, "$", barvariable, collapse=""), fixed=TRUE)
-  })
+    
+    })
   # Testing box at bottom of page to see dateframe$variable to plot 
-  output$plotvar <- renderText({ 
-    paste("Dataframe$Variable: ", BarInput())})
+  output$plotvariable <- renderText({ 
+    BarInput()})
   # Text box above Button showing which dataset and variable is plotted!
   output$histplotvar <- renderText({ 
     paste("Dataset Chosen: ", input$Analysis, ". Plotting Variable: ", input$AnalysisVar)})
@@ -86,15 +89,11 @@ shinyServer(function(input, output, session) {
   #### Bar chart and summary table When button is clicked. ####
   observeEvent(input$histbutton, {
     BarInput()
-    output$analysisplot1 <- renderPlot(plot(BarInput(), xlab="X-Axis", ylab="Count"))
-    # Just for reference, the line below works fine
-    #output$analysisplot1<- renderPlot(plot(ind$Travel, xlab=paste(BarInput()), ylab="Count"))
-  })
+    p <- ggplot(BarInput()) + geom_bar(aes(x=input$AnalysisVar))
+    output$analysisplot1 <- RenderPlot(ggplotly(analysisplot1)) # set to interactive
+    })
   observeEvent(input$histbutton, { 
     output$analysistable <-renderPrint({ 
-      # This prints a summary of the whole dataframe within input$Analysis
-      # I want to print a summary of an individual variable  
-      # dataframe$variable would be (input$Analysis $ input$AnalysisVar)
       summary(eval(as.name(input$Analysis)))
     })
   })
@@ -106,49 +105,49 @@ shinyServer(function(input, output, session) {
     cramer.test((eval(as.name(input$ModelFit))), nrep=1000, conf.level=95)
   })
   
-  # HAVEN'T GOT TO THIS SECTION ON DASHBOARD YET #
-  #### Chi Squared Testing for Multi-collinearity ####
-  #Chi squared Section#
-  #Created tables for all variables included against Commuting Time (important in Personal Carbon Usage)
-  # # the contingency table for age and commuting time
-  tbl_agecom <- table(ind$Age, ind$Commuting.Time)
-  #tbl_agecom
-  # # the contingency table for sex and commuting time
-  tbl_sexcom <- table(ind$ï..Sex, ind$Commuting.Time)
-  
-  # #tbl_sexcom
-  # # the contingency table for ltd and commuting time
-  tbl_ltdcom <- table(ind$LTD, ind$Commuting.Time)
-  
-  # #tbl_ltdcom
-  # # the contingency table for employment and commuting time
-  tbl_empcom <- table(ind$Employment.Sector, ind$Commuting.Time)
-  # #tbl_empcom
-  # # the contingency table for travel and commuting time
-  tbl_travcom <- table(ind$Travel, ind$Commuting.Time)
-  # tbl_travcom
-  #
-  # #Run cramer test for strength and chi squared assocation between variables
-  # cramer.test(tbl_agecom,nrep = 1000, conf.level = 95) #chi squared and cramer's V for age vs commuting time
-  # cramer.test(tbl_sexcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for sex vs commuting time
-  # cramer.test(tbl_ltdcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for disability vs commuting time
-  # cramer.test(tbl_empcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for employment vs commuting time
-  # cramer.test(tbl_travcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for travel vs commuting time
-  
-  
-  # #Found that Sex, Employment and Travel significant as <0.05, so test against each other to measure collinearity.
-  tbl_sexemp <- table(ind$ï..Sex, ind$Employment.Sector)
-  # tbl_sexemp          # the contingency table for sex and employment
-  tbl_sextrav <- table(ind$ï..Sex, ind$Travel)
-  # tbl_sextrav         # the contingency table for sex and travel
-  tbl_travemp <- table(ind$Travel, ind$Employment.Sector)
-  # tbl_travemp          # the contingency table for LTD and employment
-  tbl_ltdemp <- table(ind$LTD, ind$Employment.Sector)
-  # tbl_ltdemp          # the contingency table for LTD and employment
-  tbl_ltdtrav <- table(ind$LTD, ind$Travel)
-  # tbl_ltdtrav          # the contingency table for LTD and travel
-  tbl_ltdsex <- table(ind$LTD, ind$ï..Sex)
-  # tbl_ltdsex          # the contingency table for LTD and employment
+  # # HAVEN'T GOT TO THIS SECTION ON DASHBOARD YET #
+  # #### Chi Squared Testing for Multi-collinearity ####
+  # #Chi squared Section#
+  # #Created tables for all variables included against Commuting Time (important in Personal Carbon Usage)
+  # # # the contingency table for age and commuting time
+  # tbl_agecom <- table(ind$Age, ind$Commuting.Time)
+  # #tbl_agecom
+  # # # the contingency table for sex and commuting time
+  # tbl_sexcom <- table(ind$ï..Sex, ind$Commuting.Time)
+  # 
+  # # #tbl_sexcom
+  # # # the contingency table for ltd and commuting time
+  # tbl_ltdcom <- table(ind$LTD, ind$Commuting.Time)
+  # 
+  # # #tbl_ltdcom
+  # # # the contingency table for employment and commuting time
+  # tbl_empcom <- table(ind$Employment.Sector, ind$Commuting.Time)
+  # # #tbl_empcom
+  # # # the contingency table for travel and commuting time
+  # tbl_travcom <- table(ind$Travel, ind$Commuting.Time)
+  # # tbl_travcom
+  # #
+  # # #Run cramer test for strength and chi squared assocation between variables
+  # # cramer.test(tbl_agecom,nrep = 1000, conf.level = 95) #chi squared and cramer's V for age vs commuting time
+  # # cramer.test(tbl_sexcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for sex vs commuting time
+  # # cramer.test(tbl_ltdcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for disability vs commuting time
+  # # cramer.test(tbl_empcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for employment vs commuting time
+  # # cramer.test(tbl_travcom,nrep = 1000, conf.level = 95)#chi squared and cramer's V for travel vs commuting time
+  # 
+  # 
+  # # #Found that Sex, Employment and Travel significant as <0.05, so test against each other to measure collinearity.
+  # tbl_sexemp <- table(ind$ï..Sex, ind$Employment.Sector)
+  # # tbl_sexemp          # the contingency table for sex and employment
+  # tbl_sextrav <- table(ind$ï..Sex, ind$Travel)
+  # # tbl_sextrav         # the contingency table for sex and travel
+  # tbl_travemp <- table(ind$Travel, ind$Employment.Sector)
+  # # tbl_travemp          # the contingency table for LTD and employment
+  # tbl_ltdemp <- table(ind$LTD, ind$Employment.Sector)
+  # # tbl_ltdemp          # the contingency table for LTD and employment
+  # tbl_ltdtrav <- table(ind$LTD, ind$Travel)
+  # # tbl_ltdtrav          # the contingency table for LTD and travel
+  # tbl_ltdsex <- table(ind$LTD, ind$ï..Sex)
+  # # tbl_ltdsex          # the contingency table for LTD and employment
 
   # Read in the Leeds LSOA shapefile
   LSOA_shp <- st_read('data//LEEDS.shp')

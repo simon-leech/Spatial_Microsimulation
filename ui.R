@@ -29,7 +29,7 @@ navbarPage(theme=shinytheme("flatly"), "Leeds LSOA Vulnerability",
            # In here I want to show Model Fit variables, and multicollinerarity tables.
            tabPanel("Model Fit and External Validation", 
                     fluidRow(selectInput("ModelFit", "Choose Variables for Individual Dataset to compare: ",c("Age vs Commuting Time"="tbl_agecom", "Sex vs Commuting Time"="tbl_sexcom", "LTD vs Commuting Time"="tbl_ltdcom", "Employment Sector vs Commuting Time"="tbl_empcom", "Travel vs Commuting Time"= "tbl_travcom", "Sex vs Employment Sector"="tbl_sexemp", "Sex vs Travel"="tbl_sextrav", "Travel vs Employment Sector"="tbl_travemp", "LTD vs Employment Sector"="tbl_ltdemp", "LTD vs Travel"="tbl_ltdtrav", "LTD vs Sex"="tbl_ltdsex") )),
-                    verbatimTextOutput("Collinearity"),
+                    verbatimTextOutput("collinearity"),
            ),
            
            # In here I want to be able to show the Leaflet map already created in Amended_Microsim.R
