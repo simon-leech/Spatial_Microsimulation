@@ -19,23 +19,32 @@ navbarPage(theme=shinytheme("flatly"), "Leeds LSOA Vulnerability",
                     withSpinner(DTOutput('Tablepage')), type=1),
            # In here I want to produce histograms for each vulnerability measure.
            tabPanel("Data Analysis and Histograms", 
-                    fluidRow(selectInput("Analysis", "Choose dataset to analyse: ", c("Individual Dataset"="ind", "Individual Dataset for Spatial Microsimulation"="ind_cat", "2011 Census Dataset"="cons_full", "2011 Census Dataset for Spatial Microsimulation"="cons","Leeds LSOA Spatial Microsimulation Population"="PCA", "Leeds LSOA Spatial Microsimulation Demographics"="DemographicsData", "Leeds LSOA External Validation Data"="Housing" ))), 
-                    fluidRow(selectInput("AnalysisVar", "Choose a variable to analyse: ", choices=NULL)),
-                    uiOutput('histplotvar'),
-                    actionButton("histbutton", "Click here to generate descriptive statistics and plots!"),
-                    withSpinner(plotOutput("analysisplot1"), type=1),
+                    sidebarLayout(
+                      sidebarPanel("Choose Dataset and Variable to Analyse",
+                      fluidRow(selectInput("Analysis", "Choose dataset to analyse: ", c("Individual Dataset"="ind", "Individual Dataset for Spatial Microsimulation"="ind_cat", "2011 Census Dataset"="cons_full", "2011 Census Dataset for Spatial Microsimulation"="cons","Leeds LSOA Spatial Microsimulation Population"="PCA", "Leeds LSOA Spatial Microsimulation Demographics"="DemographicsData", "Leeds LSOA External Validation Data"="Housing" ))), 
+                      fluidRow(selectInput("AnalysisVar", "Choose a variable to analyse: ", choices=NULL)),
+                      uiOutput('histplotvar'),
+                      actionButton("histbutton", "Click here to generate descriptive statistics and plots!")),
+                    mainPanel("Plot",
+                      withSpinner(plotOutput("analysisplot1"), type=1),
                     verbatimTextOutput("analysistable"),
-                    uiOutput("plotvar")),
+                    uiOutput("plotvar")))),
            # In here I want to show Model Fit variables, and multicollinerarity tables.
            tabPanel("Model Fit and External Validation", 
-                    fluidRow(selectInput("ModelFit", "Choose Variables for Individual Dataset to compare: ",c("Age vs Commuting Time"="tbl_agecom", "Sex vs Commuting Time"="tbl_sexcom", "LTD vs Commuting Time"="tbl_ltdcom", "Employment Sector vs Commuting Time"="tbl_empcom", "Travel vs Commuting Time"= "tbl_travcom", "Sex vs Employment Sector"="tbl_sexemp", "Sex vs Travel"="tbl_sextrav", "Travel vs Employment Sector"="tbl_travemp", "LTD vs Employment Sector"="tbl_ltdemp", "LTD vs Travel"="tbl_ltdtrav", "LTD vs Sex"="tbl_ltdsex") )),
-                    withSpinner(verbatimTextOutput("collinearity"),type=1),
+                    sidebarLayout(
+                    sidebarPanel("Select Variable for Analysis",
+                      fluidRow(selectInput("ModelFit", "Choose Variables for Individual Dataset to compare: ",c("Age vs Commuting Time"="tbl_agecom", "Sex vs Commuting Time"="tbl_sexcom", "LTD vs Commuting Time"="tbl_ltdcom", "Employment Sector vs Commuting Time"="tbl_empcom", "Travel vs Commuting Time"= "tbl_travcom", "Sex vs Employment Sector"="tbl_sexemp", "Sex vs Travel"="tbl_sextrav", "Travel vs Employment Sector"="tbl_travemp", "LTD vs Employment Sector"="tbl_ltdemp", "LTD vs Travel"="tbl_ltdtrav", "LTD vs Sex"="tbl_ltdsex") ))),
+                    mainPanel("Collinearity",
+                    withSpinner(verbatimTextOutput("collinearity"),type=1))),
            ),
            
            # In here I want to be able to show the Leaflet map already created in Amended_Microsim.R
            tabPanel("Leaflet Visualisations", 
-                   verbatimTextOutput("helpfulmapinfo"),
-                    withSpinner(leafletOutput("map", height="800px", width="1500px"),type=1),
+                    sidebarLayout(
+                      sidebarPanel("Helpful Information",
+                   verbatimTextOutput("helpfulmapinfo")),
+                      mainPanel("",
+                    withSpinner(leafletOutput("map", height="800px", width="1500px"),type=1))),
            ), 
            # In here I want to simply show the R Markdown code used for the diss (still writing out markdown- taking ages)
            tabPanel("Verbatim Code Used",
