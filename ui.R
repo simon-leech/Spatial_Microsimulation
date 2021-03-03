@@ -3,6 +3,8 @@ library("shinythemes")
 library("DT")
 library("leaflet")
 library("sf")
+library("shinycustomloader")
+library("shinycssloaders")
 # Define UI for application that draws a histogram
 navbarPage(theme=shinytheme("flatly"), "Leeds LSOA Vulnerability",
            tabPanel("Homepage",

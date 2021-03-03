@@ -14,6 +14,7 @@ library("hydroGOF") #load the hydroGOF package for RMSE
 library("reshape2") #load reshape for joining tables
 library("ggplot2")
 library("plotly") 
+library("shinycustomloader")
 library("shinycssloaders")
 library("tidyverse")
 # Define server logic required
@@ -78,11 +79,11 @@ shinyServer(function(input, output, session) {
   BarInput <- reactive ( { 
     bardf <- get(input$Analysis)
     barvariable<- bardf[,which(names(bardf)==input$AnalysisVar)]
-    print(barvariable)
+    #print(barvariable)
     plotvariable<- gsub(" ", "", paste(bardf, "$", barvariable, collapse=""), fixed=TRUE)
     plotdata <- bardf %>% count(get(input$AnalysisVar)) # count instances of each 
     colnames(plotdata) <- c("Variable", "N")
-    print(plotdata)
+    #print(plotdata)
     })
   # Testing box at bottom of page to see dateframe$variable to plot 
   output$plotvariable <- renderText({ 
@@ -93,23 +94,40 @@ shinyServer(function(input, output, session) {
   
   #### Bar chart and summary table When button is clicked. ####
   observeEvent(input$histbutton, {
-    BarInput()
-    output$analysisplot1 <- renderPlot(ggplot(data=BarInput()) + geom_bar(aes(x="Variable",y="N", fill="Variable"), stat="identity") + labs(y="Count", x=Variable))
-    })
-  observeEvent(input$histbutton, { 
-    output$analysistable <-renderPrint({ 
-      summary(eval(as.name(input$Analysis)))
+    GGplot_data()
+    output$analysisplot1 <- renderPlot(ggplot(data=GGplot_data()) + geom_bar(aes(x=Variable,y=N, fill=Variable), stat="identity") + labs(y="Count", x="Variable", title=Title()))
+    Table_Summary()
+    output$analysistable<-renderPrint({summary(Table_Summary())
+    #output$analysisplot1<- renderPlot(p)
     })
   })
   
-  #})
+  # Only update the Table Summarised when input button clicked 
+  Table_Summary <- eventReactive(input$histbutton, { 
+    summarise_var <- eval(as.name(input$Analysis))
+    })
+  
+  # Update Title for Plot when input button clicked 
+  Title <- eventReactive(input$histbutton, { 
+    paste("Plot showing Dataset of: ", input$Analysis, ". Plotting Variable: ", input$AnalysisVar)})
+  
+  # Only update the ggplot when input button clicked
+  GGplot_data <- eventReactive(input$histbutton, { 
+    BarInput()
+    bardf <- get(input$Analysis)
+    barvariable<- bardf[,which(names(bardf)==input$AnalysisVar)]
+    #print(barvariable)
+    plotvariable<- gsub(" ", "", paste(bardf, "$", barvariable, collapse=""), fixed=TRUE)
+    plotdata <- bardf %>% count(get(input$AnalysisVar)) # count instances of each
+    colnames(plotdata) <- c("Variable", "N")
+    plotdata <- plotdata
+    })
   
   # Produce cramer T Test for table inputted by User
   output$collinearity <-renderPrint({ 
     cramer.test((eval(as.name(input$ModelFit))), nrep=1000, conf.level=95)
   })
   
-  # HAVEN'T GOT TO THIS SECTION ON DASHBOARD YET #
   #### Chi Squared Testing for Multi-collinearity ####
   #Chi squared Section#
   #Created tables for all variables included against Commuting Time (important in Personal Carbon Usage)
@@ -167,15 +185,15 @@ shinyServer(function(input, output, session) {
   
   housetext <- paste(
     "LSOA Name: ", LSOA_shp_VAGG$name, "<br/>",
-    "House Price: ï", round((LSOA_shp_INCAGG$HouseP1 *1000), 0)," (",
-    "ï", round((LSOA_shp_INCAGG$HouseP1-mean(LSOA_shp_INCAGG$HouseP1)*1000),0), ifelse(round((LSOA_shp_INCAGG$HouseP1-mean(LSOA_shp_INCAGG$HouseP1)*1000),0)>0, " Above ", " Below "), "Leeds Average)",
+    "House Price: £", round((LSOA_shp_INCAGG$HouseP1 *1000), 0)," (",
+    "£", round((LSOA_shp_INCAGG$HouseP1-(mean(LSOA_shp_INCAGG$HouseP1)*1000)),0), ifelse(round((LSOA_shp_INCAGG$HouseP1-(mean(LSOA_shp_INCAGG$HouseP1)*1000)),0)>0, " Above ", " Below "), "Leeds Average)",
     sep="") %>%
     lapply(htmltools::HTML)
   
   inctext <- paste(
     "LSOA Name: ", LSOA_shp_VAGG$name, "<br/>",
-    "Income: ï", round(LSOA_shp_INCAGG$INC,2)," (",
-    "ï" ,round(LSOA_shp_INCAGG$INC-mean(LSOA_shp_INCAGG$INC),2), ifelse(round(LSOA_shp_INCAGG$INC-mean(LSOA_shp_INCAGG$INC),2)>0, " Above ", " Below "), "Leeds Average)",
+    "Income: £", round(LSOA_shp_INCAGG$INC,2)," (",
+    "£" ,round(LSOA_shp_INCAGG$INC-mean(LSOA_shp_INCAGG$INC),2), ifelse(round(LSOA_shp_INCAGG$INC-mean(LSOA_shp_INCAGG$INC),2)>0, " Above ", " Below "), "Leeds Average)",
     sep="") %>%
     lapply(htmltools::HTML)
   
@@ -433,8 +451,8 @@ shinyServer(function(input, output, session) {
       ) %>%
       addLegend(pal=palPCA2019, values=~VPCAAGG, opacity=0.9, title="VPCA 2019 (% Budget Spent, >100%= Over Budget)", position= "bottomleft", group="2019 Carbon Budget Vulnerability") %>%
       addLegend(pal=palFM, values=~LSOA_shp_INCAGG$FAMFAM, opacity=0.9, title="Proportion of Family Homes (%)", position= "bottomleft", group="Proportion of Family Homes") %>%
-      addLegend(pal=palhouse, values=~LSOA_shp_INCAGG$HouseP1, opacity=0.9, title="House Price (ï/Thousands)", position= "bottomleft", group="House Price") %>%
-      addLegend(pal=palinc, values=~LSOA_shp_INCAGG$INC, opacity=0.9, title="Income Per Year (ï/Thousands)", position= "bottomleft", group="Income per Year") %>%
+      addLegend(pal=palhouse, values=~LSOA_shp_INCAGG$HouseP1, opacity=0.9, title="House Price (£/Thousands)", position= "bottomleft", group="House Price") %>%
+      addLegend(pal=palinc, values=~LSOA_shp_INCAGG$INC, opacity=0.9, title="Income Per Year (£/Thousands)", position= "bottomleft", group="Income per Year") %>%
       addLegend(pal=paldist, values=~LSOA_shp_Demog$Dist, opacity=0.9, title="Distance to Work (Miles)", position= "bottomleft", group="Distance to Work") %>%
       addLegend(pal=palvpis, values=~LSOA_shp_INCAGG$VPIS, opacity=0.9, title="Income Spent on Work Travel", position= "bottomleft", group="Income Spent on Work Travel") %>%
       addLegend(pal=palpcte, values=~LSOA_shp_INCAGG$VPCE, opacity=0.9, title="Emissions on Work Travel (KGCO2/yr)", position= "bottomleft", group="Emissions on Work Travel") %>%
