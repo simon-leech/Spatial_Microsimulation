@@ -95,7 +95,7 @@ shinyServer(function(input, output, session) {
   #### Bar chart and summary table When button is clicked. ####
   observeEvent(input$histbutton, {
     GGplot_data()
-    output$analysisplot1 <- renderPlot(ggplot(data=GGplot_data()) + geom_bar(aes(x=Variable,y=N, fill=Variable), stat="identity") + labs(y="Count", x="Variable", title=Title()))
+    output$analysisplot1 <- renderPlot(ggplot(data=GGplot_data()) + geom_bar(aes(x=Variable,y=N, fill=Variable), stat="identity") + labs(y="Count", x="Variable", title=Title()) + theme(legend.position="none") + coord_flip())
     Table_Summary()
     output$analysistable<-renderPrint({summary(Table_Summary())
     #output$analysisplot1<- renderPlot(p)
